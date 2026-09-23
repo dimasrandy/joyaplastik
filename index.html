@@ -85,7 +85,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // GANTI URL DI BAWAH INI DENGAN URL WEB APP APPS SCRIPT ANDA
-    var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZgn1mQEUh2QfJhxBKJWlDPQXtZsSVI_1ocNhQ8jdPwe1PQimWgCV0BiYV6NTSiiHI/exec";
+    var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGkm7V44PtUe3GO63VOM_3qOPzTXESA0KY-DMNLt8Sh3PJxf-3gFcqF9NIsMx4sDbo/exec";
 
     var WA_TANYA = "6281953022814";
     var WA_REQUEST = "6287718922794";
@@ -266,23 +266,32 @@
       var dataKirim = { nama: nama, wa: wa, deskripsi: deskripsi, kegunaan: teksKegunaan, harga: harga, fileBase64: null, fileName: null };
 
       function kirimKeServerFinal(finalData) {
+        // Menggunakan mode no-cors agar lolos dari blokir browser luar
         fetch(SCRIPT_URL, {
           method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(finalData)
         })
-        .then(res => res.json())
-        .then(resData => {
-          var linkFotoDrive = (resData && resData.linkFoto) ? resData.linkFoto : "Tidak ada link foto";
-          var infoFoto = (linkFotoDrive.indexOf("http") === 0) ? linkFotoDrive : "Foto gagal diupload ke Drive.";
+        .then(() => {
+          // Karena dikirim via no-cors, kita buat format pesan sukses standar ke WA
+          var infoFoto = finalData.fileBase64 ? "Foto berhasil di-request (Cek Google Drive Toko)." : "Tidak melampirkan foto.";
 
-          var teksWa = "Halo JOYA PLASTIK, saya mau Request Produk Baru:\n\n👤 *Nama:* " + finalData.nama + "\n📞 *No WA:* " + finalData.wa + "\n📝 *Deskripsi:* " + finalData.deskripsi + "\n🎯 *Kegunaan:* " + finalData.Kegunaan + "\n💰 *Harga:* " + (finalData.harga || '-') + "\n\n📸 *Link Foto:* " + infoFoto + "\n\nApakah barang ini bisa disediakan?";
+          var teksWa = "Halo JOYA PLASTIK, saya mau Request Produk Baru:\n\n" +
+                       "👤 *Nama:* " + finalData.nama + "\n" +
+                       "📞 *No WA:* " + finalData.wa + "\n" +
+                       "📝 *Deskripsi:* " + finalData.deskripsi + "\n" +
+                       "🎯 *Kegunaan:* " + finalData.kegunaan + "\n" +
+                       "💰 *Harga:* " + (finalData.harga || '-') + "\n\n" +
+                       "📸 *Status Foto:* " + infoFoto + "\n\n" +
+                       "Apakah barang ini bisa disediakan?";
           
           var linkArahWA = "https://wa.me/" + WA_REQUEST + "?text=" + encodeURIComponent(teksWa);
           window.open(linkArahWA, '_top');
         })
         .catch(err => {
-          // Fallback jika terjadi kendala jaringan
-          var teksWa = "Halo JOYA PLASTIK, saya mau Request Produk Baru:\n\n👤 *Nama:* " + finalData.nama + "\n📞 *No WA:* " + finalData.wa + "\n📝 *Deskripsi:* " + finalData.deskripsi + "\n\nApakah barang ini bisa disediakan?";
+          alert("Terjadi kendala jaringan, tetapi form tetap diteruskan ke WhatsApp.");
+          var teksWa = "Halo JOYA PLASTIK, saya mau Request Produk Baru:\n\n👤 *Nama:* " + finalData.nama + "\n📞 *No WA:* " + finalData.wa + "\n📝 *Deskripsi:* " + finalData.deskripsi;
           var linkArahWA = "https://wa.me/" + WA_REQUEST + "?text=" + encodeURIComponent(teksWa);
           window.open(linkArahWA, '_top');
         });
