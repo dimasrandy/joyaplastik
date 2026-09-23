@@ -1,31 +1,265 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Katalog Joya Plastik</title>
-    <style>
-        * { box-sizing: border-box; }
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #f8f9fa;
-        }
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            display: block;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Katalog Joya Plastik</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    html, body { background-color: #f8f9fa; font-family: sans-serif; margin: 0; padding: 0; width: 100%; overflow-x: hidden; }
+    .header-box { background: #075e54; color: white; padding: 15px; text-align: center; border-radius: 0 0 15px 15px; width: 100%; }
+    #halamanKatalog { padding-bottom: 120px; } #halamanRequest { padding-bottom: 100px; }
+    .img-container { position: relative; width: 100%; display: block; overflow: hidden; background-color: #ffffff; }
+    .card-img-top { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; pointer-events: none; }
+    .img-detail { width: 100%; aspect-ratio: 1 / 1; object-fit: contain; pointer-events: none; }
+    .watermark-teks { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); color: rgba(255, 255, 255, 0.95); background-color: rgba(0, 0, 0, 0.4); padding: 2px 10px; border-radius: 4px; font-size: 0.70rem; font-weight: bold; pointer-events: none; user-select: none; white-space: nowrap; z-index: 10; }
+    .card { border-radius: 12px; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 15px; }
+    .btn-wa { background-color: #25d366; color: white; font-weight: bold; border-radius: 8px; width: 100%; border: none; padding: 8px; }
+    .badge-kategori { background-color: #e8f5e9; color: #2e7d32; border-radius: 6px; padding: 4px 8px; font-size: 0.75rem; }
+    .bottom-bar { position: fixed !important; bottom: 25px !important; left: 20px !important; right: 20px !important; width: auto !important; background: transparent !important; padding: 0 !important; z-index: 999999 !important; }
+    .btn-melayang { box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4) !important; padding-top: 12px !important; padding-bottom: 12px !important; }
+    .req-label { font-size: 0.85rem; font-weight: bold; margin-top: 15px; margin-bottom: 5px; color: #444; }
+  </style>
 </head>
 <body>
 
-    <!-- Ganti URL di dalam tanda kutip di bawah ini dengan URL Web App Apps Script Anda yang berakhiran /exec -->
-    <iframe src="Uhttps://script.google.com/macros/s/AKfycbyezoHtvq2sUI59m8KwoKUv-V60zTMXKwZJXMSm-EDLcfVBGfUt5ehScdTcaTsdlf0R/exec"></iframe>
+  <div class="header-box shadow-sm mb-3" id="mainHeader">
+    <h4 class="m-0 fw-bold">JOYA PLASTIK</h4>
+    <small style="font-size: 11px; display:block; margin-top:3px;">Jl. Kh Ahmad Dahlan No. 148 A, Lamongan</small>
+    <small style="font-size: 11px; color:#c8e6c9;">Pilih produk dan tanyakan via WhatsApp</small>
+  </div>
 
+  <div class="container-fluid px-3" id="halamanKatalog">
+    <div class="row mb-3">
+      <div class="col-12 mb-2"><input type="text" id="inputCari" class="form-control shadow-sm" placeholder="🔍 Cari nama produk..." onkeyup="filterData()"></div>
+      <div class="col-12"><select id="selectKategori" class="form-select shadow-sm" onchange="filterData()"><option value="Semua">-- Semua Kategori --</option></select></div>
+    </div>
+    <div id="loading" class="text-center my-4"><div class="spinner-border text-success" role="status"></div><p class="mt-2 text-muted small">Memuat data...</p></div>
+    <div class="row" id="katalogContainer"></div>
+  </div>
+
+  <div class="container-fluid px-3" id="halamanRequest" style="display: none;">
+    <button class="btn btn-outline-secondary btn-sm mb-3" onclick="kembaliKeKatalog()">⬅ Batal & Kembali</button>
+    <div class="card p-3 shadow-sm mb-4">
+      <h5 class="fw-bold text-danger mb-0">Request Produk Baru</h5>
+      <p class="text-muted small mb-3">Lengkapi form ini agar kami carikan barangnya.</p>
+      
+      <div class="req-label">Nama Anda</div><input type="text" id="reqNama" class="form-control" placeholder="Masukkan nama...">
+      <div class="req-label">No WhatsApp Anda</div><input type="number" id="reqWa" class="form-control" placeholder="Contoh: 08123456...">
+      <div class="req-label">Foto Barang (Opsional)</div><input type="file" id="reqFoto" class="form-control" accept="image/*">
+      <div class="req-label">Deskripsi Barang</div><textarea id="reqDeskripsi" class="form-control" rows="3" placeholder="Sebutkan ciri-ciri, ukuran, warna barang..."></textarea>
+      <div class="req-label">Kegunaan Barang</div>
+      <select id="reqKegunaanUtama" class="form-select" onchange="aturOpsiKegunaan()">
+        <option value="">-- Pilih Tujuan --</option><option value="Untuk Acara">Untuk Acara</option><option value="Untuk Jualan">Untuk Jualan</option><option value="Pemakaian Pribadi">Pemakaian Pribadi</option>
+      </select>
+      <div id="divOpsiAcara" style="display:none; margin-top:10px;"><input type="text" id="reqDetailAcara" class="form-control form-control-sm" placeholder="Sebutkan (contoh: Resepsi, Ulang Tahun, dll)"></div>
+      <div id="divOpsiJualan" style="display:none; margin-top:10px;"><select id="reqDetailJualan" class="form-select form-select-sm"><option value="Sudah Berjalan">Usaha Sudah Berjalan</option><option value="Baru Mulai">Usaha Baru Mulai</option></select></div>
+      <div class="req-label">Perkiraan Kisaran Harga</div><input type="text" id="reqHarga" class="form-control" placeholder="Contoh: Rp 20.000 / pcs">
+      <button id="btnKirimReq" class="btn btn-danger fw-bold w-100 mt-4 py-3 shadow" onclick="prosesKirimWA()">Kirim Request via WhatsApp</button>
+    </div>
+  </div>
+
+  <div class="bottom-bar" id="bottomBar">
+    <button class="btn btn-danger w-100 fw-bold rounded-pill btn-melayang" onclick="bukaHalamanRequest()">+ Request Produk Baru</button>
+  </div>
+
+  <!-- MODAL DETAIL -->
+  <div class="modal fade" id="modalDetail" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header border-0 pb-0"><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body p-0 text-center">
+          <div class="img-container"><img id="detailFoto" src="" class="img-detail"><div class="watermark-teks">JOYA PLASTIK</div></div>
+          <div class="p-3 text-start">
+            <span class="badge-kategori mb-2" id="detailKategori"></span><h5 class="fw-bold mb-1" id="detailNama"></h5>
+            <p class="text-muted mb-2 small" id="detailVariasi"></p><p id="detailDeskripsi" class="text-secondary small"></p>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <a href="#" id="detailWaBtn" class="btn-wa text-center text-decoration-none">Tanya via WA</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Ganti URL di bawah ini dengan URL Web App Apps Script Anda yang berakhiran /exec
+    var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzmgBiahcV0at_XJrACrWWG8ybffiHQNwNCzfr9N8USovoep4vPeqV3kzv4niyEI4PE/exec";
+
+    var WA_TANYA = "6281953022814";
+    var WA_REQUEST = "6287718922794";
+    var semuaData = [];
+    var modal;
+
+    window.onload = function() {
+      modal = new bootstrap.Modal(document.getElementById('modalDetail'));
+      fetch(SCRIPT_URL + "?action=getData")
+        .then(res => res.json())
+        .then(data => dataDimuat(data))
+        .catch(err => {
+          document.getElementById('loading').innerHTML = '<p class="text-danger small">Gagal memuat data katalog.</p>';
+        });
+    };
+
+    function dataDimuat(data) {
+      semuaData = data;
+      document.getElementById('loading').style.display = 'none';
+      var kategoriSet = new Set();
+      data.forEach(item => { if(item.kategori) kategoriSet.add(item.kategori); });
+      var select = document.getElementById('selectKategori');
+      kategoriSet.forEach(kat => {
+        var opt = document.createElement('option'); opt.value = kat; opt.innerHTML = kat; select.appendChild(opt);
+      });
+      renderCards(data);
+    }
+
+    function renderCards(data) {
+      var container = document.getElementById('katalogContainer');
+      container.innerHTML = '';
+      if(data.length === 0) { container.innerHTML = '<div class="text-center text-muted my-4 small">Produk tidak ditemukan.</div>'; return; }
+      
+      data.forEach(item => {
+        var imgUrl = item.foto ? item.foto : 'https://via.placeholder.com/300x200?text=No+Foto';
+        var teksWa = "Halo JOYA PLASTIK, saya mau tanya produk:\n\n*Nama:* " + item.nama + "\n*Variasi:* " + (item.variasi || '-') + "\n*Foto:* " + item.foto + "\n\nApakah produk ini ready?";
+        var linkWa = "https://wa.me/" + WA_TANYA + "?text=" + encodeURIComponent(teksWa);
+
+        var html = `
+          <div class="col-6 mb-3">
+            <div class="card h-100" style="cursor:pointer;" onclick="bukaDetail(${item.id})">
+              <div class="img-container">
+                <img src="${imgUrl}" class="card-img-top"><div class="watermark-teks">JOYA PLASTIK</div>
+              </div>
+              <div class="card-body d-flex flex-column p-2">
+                <span class="badge-kategori mb-1 align-self-start">${item.kategori || 'Umum'}</span>
+                <h6 class="card-title fw-bold m-0" style="font-size:14px; line-height: 1.2;">${item.nama}</h6>
+                <small class="text-muted mb-2" style="font-size:11px;">${item.variasi || ''}</small>
+                <div class="mt-auto">
+                  <a href="${linkWa}" onclick="event.stopPropagation(); window.open(this.href, '_top');" class="btn-wa text-center d-block text-decoration-none" style="font-size:12px;">Tanya via WA</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        container.innerHTML += html;
+      });
+    }
+
+    function filterData() {
+      var kat = document.getElementById('selectKategori').value;
+      var cari = document.getElementById('inputCari').value.toLowerCase();
+      var filtered = semuaData.filter(item => {
+        var cocokKat = (kat === 'Semua') || (item.kategori === kat);
+        var cocokCari = item.nama.toLowerCase().includes(cari) || (item.deskripsi && item.deskripsi.toLowerCase().includes(cari));
+        return cocokKat && cocokCari;
+      });
+      renderCards(filtered);
+    }
+
+    function bukaDetail(id) {
+      var item = semuaData.find(d => d.id === id);
+      if(!item) return;
+      document.getElementById('detailNama').innerText = item.nama;
+      document.getElementById('detailKategori').innerText = item.kategori || 'Umum';
+      document.getElementById('detailVariasi').innerText = item.variasi || '-';
+      document.getElementById('detailDeskripsi').innerText = item.deskripsi || 'Tidak ada deskripsi.';
+      document.getElementById('detailFoto').src = item.foto ? item.foto : '';
+      
+      var teksWa = "Halo JOYA PLASTIK, saya mau tanya produk:\n\n*Nama:* " + item.nama + "\n*Variasi:* " + (item.variasi || '-') + "\n*Foto:* " + item.foto + "\n\nApakah ready?";
+      document.getElementById('detailWaBtn').href = "https://wa.me/" + WA_TANYA + "?text=" + encodeURIComponent(teksWa);
+      document.getElementById('detailWaBtn').onclick = function(e) { e.preventDefault(); window.open(this.href, '_top'); };
+      modal.show();
+    }
+
+    function bukaHalamanRequest() {
+      document.getElementById('halamanKatalog').style.display = 'none';
+      document.getElementById('bottomBar').style.display = 'none';
+      document.getElementById('halamanRequest').style.display = 'block';
+      window.scrollTo(0,0);
+    }
+    function kembaliKeKatalog() {
+      document.getElementById('halamanRequest').style.display = 'none';
+      document.getElementById('halamanKatalog').style.display = 'block';
+      document.getElementById('bottomBar').style.display = 'block';
+    }
+
+    function aturOpsiKegunaan() {
+      var utama = document.getElementById('reqKegunaanUtama').value;
+      document.getElementById('divOpsiAcara').style.display = (utama === 'Untuk Acara') ? 'block' : 'none';
+      document.getElementById('divOpsiJualan').style.display = (utama === 'Untuk Jualan') ? 'block' : 'none';
+    }
+
+    function kompresFoto(file, callback) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = new Image();
+        img.onload = function() {
+          var MAX_SIZE = 1200;
+          var width = img.width, height = img.height;
+          if (width > MAX_SIZE || height > MAX_SIZE) {
+            if (width > height) { height = Math.round(height * MAX_SIZE / width); width = MAX_SIZE; }
+            else { width = Math.round(width * MAX_SIZE / height); height = MAX_SIZE; }
+          }
+          var canvas = document.createElement("canvas");
+          canvas.width = width; canvas.height = height;
+          var ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          callback(canvas.toDataURL("image/jpeg", 0.75));
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function prosesKirimWA() {
+      var nama = document.getElementById('reqNama').value;
+      var wa = document.getElementById('reqWa').value;
+      var deskripsi = document.getElementById('reqDeskripsi').value;
+      var harga = document.getElementById('reqHarga').value;
+      
+      if(!nama || !deskripsi) { alert("Mohon isi Nama dan Deskripsi barang terlebih dahulu."); return; }
+
+      var utama = document.getElementById('reqKegunaanUtama').value;
+      var teksKegunaan = utama;
+      if (utama === 'Untuk Acara') teksKegunaan += " (" + document.getElementById('reqDetailAcara').value + ")";
+      if (utama === 'Untuk Jualan') teksKegunaan += " (" + document.getElementById('reqDetailJualan').value + ")";
+
+      var btn = document.getElementById('btnKirimReq');
+      btn.innerText = "Mengupload & Memproses..."; btn.disabled = true;
+
+      var fileInput = document.getElementById('reqFoto');
+      var file = fileInput.files[0];
+
+      var dataKirim = { nama: nama, wa: wa, deskripsi: deskripsi, kegunaan: teksKegunaan, harga: harga, fileBase64: null, fileName: null };
+
+      function kirimKeServerFinal(finalData) {
+        // Menggunakan fetch untuk kirim data ke Apps Script dari GitHub
+        fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(finalData)
+        }).then(() => {
+          var infoFoto = finalData.fileBase64 ? "Foto terlampir di sistem." : "Tidak melampirkan foto.";
+          var teksWa = "Halo JOYA PLASTIK, saya mau Request Produk Baru:\n\n👤 *Nama:* " + finalData.nama + "\n📞 *No WA:* " + finalData.wa + "\n📝 *Deskripsi:* " + finalData.deskripsi + "\n🎯 *Kegunaan:* " + finalData.kegunaan + "\n💰 *Harga:* " + (finalData.harga || '-') + "\n\nApakah barang ini bisa disediakan?";
+          var linkArahWA = "https://wa.me/" + WA_REQUEST + "?text=" + encodeURIComponent(teksWa);
+          window.open(linkArahWA, '_top');
+        }).catch(err => {
+          alert("Gagal mengirim data. Coba lagi.");
+          btn.innerText = "Kirim Request via WhatsApp"; btn.disabled = false;
+        });
+      }
+
+      if (file) {
+        kompresFoto(file, function(base64Foto) {
+          dataKirim.fileBase64 = base64Foto;
+          dataKirim.fileName = "foto_request.jpg";
+          kirimKeServerFinal(dataKirim);
+        });
+      } else {
+        kirimKeServerFinal(dataKirim);
+      }
+    }
+  </script>
 </body>
 </html>
